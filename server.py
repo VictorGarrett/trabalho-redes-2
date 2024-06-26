@@ -4,7 +4,7 @@ import sys
 import hashlib
 import os
 
-HOST = "127.0.0.1" 
+HOST = "10.0.0.16" 
 PORT = 65433  
 
 def listen(serversocket, stop_event):
@@ -24,13 +24,15 @@ def send_file(clientsocket, filename):
     #print(f"sendfile {filename.decode('ascii')}---")
     try:
         with open(filename.decode('ascii'), 'rb') as file:
-            clientsocket.sendall(b'fbeg' + filename)
+            size = os.path.getsize(filename)
+            #print(f'sending file of size{size}')
+            clientsocket.sendall(b'fbeg' + size.to_bytes(4, byteorder='big') + filename)
             md5 = hashlib.md5()
-            chunk = file.read(1020)
+            chunk = file.read(1024)
             while chunk:
-                md5.update(chunk) 
-                clientsocket.sendall(b'fprt' + chunk)
-                chunk = file.read(1020)
+                md5.update(chunk)
+                clientsocket.sendall(chunk)
+                chunk = file.read(1024)
                 
         clientsocket.sendall(b'fend' + md5.digest())
     except:
